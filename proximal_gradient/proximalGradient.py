@@ -20,11 +20,11 @@ def l21(parameter, bias=None, reg=0.01, lr=0.1):
         ones = torch.ones(w_and_b.size(0), device=torch.device("cpu"))
     l21T = 1.0 - torch.min(ones, Norm)
     update = (parameter*(l21T.unsqueeze(1)))
-    parameter.data = update
+    parameter.data[:] = update
     # Update bias
     if bias is not None:
         update_b = (bias*l21T)
-        bias.data = update_b
+        bias.data[:] = update_b
 
 def l21_slow(parameter, reg=0.01, lr=0.1):
     """L21 Regularization (Slow implementation. Used for
@@ -96,11 +96,11 @@ def linf1(parameter, bias=None, reg=0.01, lr=0.1):
     # Actually update parameters and bias
     if bias is not None:
         update = final_w_and_b[:,:cols-1]
-        parameter.data = update
+        parameter.data[:] = update
         update_b = final_w_and_b[:,-1]
-        bias.data = update_b
+        bias.data[:] = update_b
     else:
-        parameter.data = final_w_and_b
+        parameter.data[:] = final_w_and_b
         
 
 
@@ -133,7 +133,7 @@ def l2(parameter, bias=None, reg=0.01, lr=0.1):
         ones_w = torch.ones(parameter.size(), device=torch.device("cpu"))
     l2T = 1.0 - torch.min(ones_w, Norm)
     update = (parameter*l2T) 
-    parameter.data = update
+    parameter.data[:] = update
     # Update bias
     if bias is not None:
         if Norm.is_cuda:
@@ -142,7 +142,7 @@ def l2(parameter, bias=None, reg=0.01, lr=0.1):
             ones_b = torch.ones(bias.size(), device=torch.device("cpu"))
         l2T = 1.0 - torch.min(ones_b, bias)
         update_b = (bias*l2T)
-        bias.data = update_b
+        bias.data[:] = update_b
 
 def l1(parameter, bias=None, reg=0.01, lr=0.1):
     """L1 Regularization using Proximal Gradients"""
@@ -156,7 +156,7 @@ def l1(parameter, bias=None, reg=0.01, lr=0.1):
     pos = torch.min(Norms_w, Norm*torch.clamp(parameter, min=0))
     neg = torch.min(Norms_w, -1.0*Norm*torch.clamp(parameter, max=0))
     update_w = parameter - pos + neg
-    parameter.data = update_w
+    parameter.data[:] = update_w
 
     if bias is not None:
         if bias.is_cuda:
@@ -166,7 +166,7 @@ def l1(parameter, bias=None, reg=0.01, lr=0.1):
         pos = torch.min(Norms_b, Norm*torch.clamp(bias, min=0))
         neg = torch.min(Norms_b, -1.0*Norm*torch.clamp(bias, max=0))
         update_b = bias - pos + neg
-        bias.data = update_b
+        bias.data[:] = update_b
 
 def elasticnet(parameter, bias=None, reg=0.01, lr=0.1, gamma=1.0):
     """Elastic Net Regularization using Proximal Gradients.
@@ -177,10 +177,10 @@ def elasticnet(parameter, bias=None, reg=0.01, lr=0.1, gamma=1.0):
     Norm = reg*lr*gamma
     l1(parameter, bias, reg, lr)
     update_w = (1.0/(1.0 + Norm))*parameter
-    parameter.data = update_w
+    parameter.data[:] = update_w
     if bias is not None:
         update_b = (1.0/(1.0 + Norm))*bias
-        bias.data = update_b
+        bias.data[:] = update_b
 
 def logbarrier(parameter, bias=None, reg=0.01, lr=0.1):
     """Project onto logbarrier. Useful for minimization
@@ -194,13 +194,11 @@ def logbarrier(parameter, bias=None, reg=0.01, lr=0.1):
     squared = squared + 4*Norm
     squareroot = torch.sqrt(squared)
     update_w = (parameter + squareroot)/2.0
-    parameter.data = update_w
+    parameter.data[:] = update_w
 
     if bias is not None:
         squared = torch.mul(bias, bias)
         squared = squared + 4*Norm
         squareroot = torch.sqrt(squared)
         update_b = (bias + squareroot)/2.0
-        bias.data = update_b
-
-
+        bias.data[:] = update_b
